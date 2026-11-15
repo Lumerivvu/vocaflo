@@ -6,7 +6,7 @@ let IX=null,SV=null;const save=()=>{IX=null;SV=null;try{localStorage.setItem(K,J
 const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const LOGO='<svg viewBox="0 0 32 32" role="img" aria-label="VocabFlow"><rect width="32" height="32" rx="9" fill="#8957FF"/><path d="M8.5 10.5 16 23l7.5-12.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="8.5" r="2.6" fill="#38D9E6"/></svg>';
 const today=()=>new Date().toISOString().slice(0,10);
-const TN={dr:'German → Russian',rd:'Russian → German',art:'Articles',pl:'Plurals',mis:'Missing word',man:'Typing: German → Russian',rev:'Typing: Russian → German',mist:'Typing: missing word',aud:'Listening'};
+const TN={dr:'German → Russian',rd:'Russian → German',art:'Articles',pl:'Plurals',mis:'Missing word',man:'Typing: German → Russian',rev:'Typing: Russian → German',mist:'Typing: missing word',ord:'Build the sentence',aud:'Listening'};
 const POS={noun:'noun',verb:'verb',adjective:'adjective',adverb:'adverb',preposition:'preposition',conjunction:'conjunction',expression:'expression',collocation:'collocation'};
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2600)}
 function ask(msg,fn){$('#ov').innerHTML=`<div class="modal"><div class="card glass" role="dialog"><p>${e(msg)}</p><div class="row"><button class="pri" id="y">Confirm</button><button id="n">Cancel</button></div></div></div>`;$('#n').onclick=()=>$('#ov').innerHTML='';$('#y').onclick=()=>{$('#ov').innerHTML='';fn()}}
@@ -24,7 +24,7 @@ function dl(name,txt,type){const a=document.createElement('a');a.href=URL.create
 const SAMPLE='der Apfel | яблоко | noun | Äpfel\ndie Herausforderung | вызов, трудность | noun | Herausforderungen | Diese Aufgabe ist eine große Herausforderung. | Это задание — большая трудность. | Alltag\nlernen | учить, изучать | verb | | Ich möchte jeden Tag Deutsch lernen. | Я хочу учить немецкий каждый день.\nobwohl | хотя | conjunction\nzuverlässig | надежный | adjective | | Er ist ein zuverlässiger Freund.\neine Entscheidung treffen | принять решение | expression\nvermeiden | избегать | verb | | Wir sollten Fehler vermeiden.\nverhindern | предотвращать | verb | | Wir wollen einen Unfall verhindern.\ndas Haus | дом | noun | Häuser\ndie Straße | улица | noun | Straßen';
 // ---------- skills / SRS ----------
 const isSeen=w=>!!w.seen||Object.values(w.s).some(x=>x.n>0);
-const SEED={man:'dr',rev:'rd',mist:'mis',aud:'rd'},TYP={man:1,rev:1,mist:1},seen=w=>Object.values(w.s).some(x=>x.n>0);
+const SEED={man:'dr',rev:'rd',mist:'mis',ord:'rd',aud:'rd'},TYP={man:1,rev:1,mist:1,ord:1},seen=w=>Object.values(w.s).some(x=>x.n>0);
 const sk=(w,k)=>w.s[k]||(w.s[k]={n:0,ok:0,st:Math.max(0,Math.min(3,(w.s[SEED[k]]||{st:0}).st)-1),ease:2.5,int:0,due:0});
 const SL={new:'New',learning:'Learning',fresh:'Just learned',review:'Needs review',known:'Known'},SC={new:'#6b6585',learning:'#ffb02e',fresh:'#38d9e6',review:'#ff5478',known:'#45d6a3'},SH={new:'not seen yet',learning:'still in short repeats',fresh:'learned, interval under 7 days',review:'time to repeat',known:'interval 7+ days'};
 const status=w=>{const k=Object.values(w.s).filter(x=>x.n>0);if(!k.length)return'new';if(k.some(x=>x.st<3))return'learning';if(k.some(x=>x.due<=Date.now()))return'review';return k.every(x=>x.int>=7)?'known':'fresh'};
@@ -36,11 +36,11 @@ function apply(w,m,ok){const s=sk(w,m),t=S.types[m]||(S.types[m]={n:0,ok:0}),d=S
 const streak=()=>{let n=0,d=new Date();if(!(S.log[today()]||{}).n)d=new Date(Date.now()-DAY);for(;;){const k=d.toISOString().slice(0,10);if((S.log[k]||{}).n){n++;d=new Date(d-DAY)}else return n}};
 // ---------- question engine ----------
 const norm=s=>s.toLowerCase().replace(/[.,!?;:"'’()]/g,'').replace(/\s+/g,' ').trim();
-const nrm=s=>norm(s).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/ё/g,'е');
+const nrm=s=>norm(String(s).replace(/[\u00a0\u2009\u200b]/g,' ').replace(/[\u2010-\u2015]/g,'-')).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/ё/g,'е');
 const lev=(a,b)=>{const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
 const gap=w=>w.ex.replace(new RegExp(w.base.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'_____');
 const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const applicable=(w,m)=>TYP[m]&&!seen(w)?false:m==='art'?!!w.art:m==='pl'?(w.pos==='noun'&&!!w.pl):(m==='mis'||m==='mist')?(!!w.ex&&w.ex.toLowerCase().includes(w.base.toLowerCase())):m==='aud'?(S.words.length>=4&&typeof speechSynthesis!=='undefined'):['dr','rd'].includes(m)?S.words.length>=4:true;
+const applicable=(w,m)=>TYP[m]&&!seen(w)?false:m==='art'?!!w.art:m==='ord'?ordOk(w):m==='pl'?(w.pos==='noun'&&!!w.pl):(m==='mis'||m==='mist')?(!!w.ex&&w.ex.toLowerCase().includes(w.base.toLowerCase())):m==='aud'?(S.words.length>=4&&typeof speechSynthesis!=='undefined'):['dr','rd'].includes(m)?S.words.length>=4:true;
 // distractors: same part of speech / article / category, similar length, ending and spelling, plus words the user has confused before
 function lure(w,key,pool){const a=String(w[key]).toLowerCase(),ln=a.length,wc=a.split(/\s+/).length;
  return pool.map(x=>{const t=String(x[key]).toLowerCase();let sc=Math.random()*1.5;
@@ -48,31 +48,80 @@ function lure(w,key,pool){const a=String(w[key]).toLowerCase(),ln=a.length,wc=a.
   sc-=Math.abs(t.length-ln)/4;if(t.split(/\s+/).length===wc)sc+=1;if(t.slice(-2)===a.slice(-2))sc+=2;if(t[0]===a[0])sc+=1;
   if(t.length<20&&a.length<20)sc+=Math.max(0,3-lev(a,t)/3);
   sc+=Math.min(6,((S.conf[w.id+'|'+x.id]||0)+(S.conf[x.id+'|'+w.id]||0))*3);return[x,sc]}).sort((p,q)=>q[1]-p[1]).map(p=>p[0])}
+// meanings of a word = set of normalized Russian translations (split by , ; /, parentheses removed)
+const mean=w=>new Set(String(w.ru||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]/).map(x=>nrm(x).trim()).filter(Boolean));
+// two different words are 'the same' if they share at least one Russian meaning (synonyms)
+const same=(a,b)=>{const A=mean(a);for(const t of mean(b))if(A.has(t))return true;return false};
+// ---- typed-answer checking & exercise weights ----
+// BIAS = relative weight of each exercise type in Blitz. Higher rd / rev = more Russian→German. Tweak freely.
+const BIAS={dr:3.5,rd:8.2,aud:1.5,mis:1.3,rev:3,man:.9,mist:.5,ord:2.8,art:3.6,pl:3.2}; // ord = sentence building (also capped at ~15% of a session)
+const fold=s=>s.replace(/ae/g,'a').replace(/oe/g,'o').replace(/ue/g,'u');
+const strip=s=>String(s).replace(/\([^)]*\)/g,' ').replace(/\b(etw|jdn|jdm|jmdn|jmd)\./gi,' ');
+// every accepted spelling of a string: with/without (optional parts), etw./jdn. placeholders, "sich", leading article; Russian: each comma/;-separated meaning
+function vars(s,rus){const out=new Set(),add=x=>{x=nrm(x).replace(/\s+/g,' ').trim();if(x)out.add(x)};s=String(s||'');
+ add(s);add(strip(s));
+ if(rus)strip(s).split(/[,;\/]/).forEach(add);
+ else[s,strip(s)].forEach(b=>{add(b.replace(/^sich\s+/i,''));add(b.replace(/^(der|die|das)\s+/i,''))});
+ return[...out]}
+const altOf=(w,m)=>(w.alt&&w.alt[m])||[];
+const strictOther=(w,v)=>S.words.some(x=>x.id!==w.id&&[x.de,x.base].some(t=>t&&nrm(t)===v));
+// ---- sentence building (word order) ----
+const ordWords=w=>String(w.ex||'').trim().split(/\s+/).filter(Boolean);
+const ordOk=w=>{const n=ordWords(w).length;return n>=3&&n<=16};
+// blocks sentence building after it was used in the previous question or took ~15% of the session
+const ordBlocked=()=>!!ses&&(ses.lastM==='ord'||(ses.ordN||0)>=Math.max(1,Math.round((ses.qs.length||0)*.2)));
+function ordTok(w){const raw=ordWords(w),m=(raw[raw.length-1]||'').match(/[.!?…]+$/),end=m?m[0]:'';
+ const disp=raw.map((t,i)=>{let d=t.replace(/[.!?…]+$/,'');if(i===0&&d&&!S.words.some(x=>x.art&&nd(x.base)===nd(d.replace(/[,;:]+$/,''))))d=d.charAt(0).toLowerCase()+d.slice(1);return d});return{disp,end}}
+function ordUI(q){const used=new Set(q.sel);
+ return`<div class="ordA" id="oa">${q.sel.map((k,j)=>`<button class="chip" onclick="ordUn(${j})">${e(q.toks[k].t)}</button>`).join('')}${q.sel.length?`<span class="ordp">${e(q.end)}</span>`:'<span class="lbl">Tap the words below in the right order…</span>'}</div><div class="ordB">${q.toks.map((o,k)=>used.has(k)?`<span class="chip ghost">${e(o.t)}</span>`:`<button class="chip" onclick="ordAdd(${k})">${e(o.t)}</button>`).join('')}</div><div class="row" style="justify-content:center;margin-top:14px"><button onclick="ordClear()">Reset</button><button class="pri" onclick="ordCheck()" ${q.sel.length===q.toks.length?'':'disabled'}>Check (Enter)</button></div>`}
+function ordRender(){const q=ses.qs[ses.i],b=$('#ow');if(q&&b)b.innerHTML=ordUI(q)}
+function ordAdd(k){const q=ses.qs[ses.i];if(!q||!q.ord||ses.done||q.sel.includes(k))return;q.sel.push(k);ordRender()}
+function ordUn(j){const q=ses.qs[ses.i];if(!q||!q.ord||ses.done||j<0||j>=q.sel.length)return;q.sel.splice(j,1);ordRender()}
+function ordClear(){const q=ses.qs[ses.i];if(!q||!q.ord||ses.done)return;q.sel=[];ordRender()}
+function ordCheck(){const q=ses.qs[ses.i];if(!q||!q.ord||ses.done||q.sel.length!==q.toks.length)return;
+ const raw=q.sel.map(k=>q.toks[k].t).join(' ')+q.end,v=nrm(raw).replace(/\s+/g,' ').trim();ses.last=raw;ses.near=0;ses.artw=0;ses.note='';
+ const ok=q.acc.includes(v);if(ok&&v!==q.acc[0])ses.note='A different valid word order — also accepted';
+ finish(ok);const a=$('#oa');if(a)a.classList.add(ok?'ok':'bad')}
 function build(w,m){const o={w,m};const others=shuf(S.words.filter(x=>x.id!==w.id));
- const choice=(key,hint,pool)=>{const seen=new Set([nd(w[key])]),d=[];for(const x of lure(w,key,(pool||others).filter(y=>y[key]))){if(!seen.has(nd(x[key]))&&d.length<3){seen.add(nd(x[key]));d.push(x)}}if(d.length<3)return null;
+ const choice=(key,hint,pool)=>{const seen=new Set([nd(w[key])]),d=[];for(const x of lure(w,key,(pool||others).filter(y=>y[key]&&!same(w,y)))){if(!seen.has(nd(x[key]))&&d.length<3){seen.add(nd(x[key]));d.push(x)}}if(d.length<3)return null;
   o.opts=shuf([w,...d]).map(x=>({t:x[key],id:x.id}));o.ans=w[key];o.hint=hint;return o};
  if(m==='dr'){o.big=w.de;return choice('ru','What does this word mean?')}
  if(m==='aud'){o.big='🔊';return choice('de','Listen and choose the word you hear')}
  if(m==='rd'){o.big=w.ru;return choice('de','Choose the German equivalent')}
  if(m==='art'){o.big=w.base;o.opts=['der','die','das'].map(t=>({t}));o.ans=w.art;o.hint='Which article? Look at the colour';return o}
- if(m==='man'){o.big=w.de;o.typed=1;o.hint='Type the Russian translation';o.acc=w.ru.split(/[,;]/).concat(w.ru).map(nrm);o.ans=w.ru;return o}
- if(m==='rev'){o.big=w.ru;o.typed=1;o.hint='Type the German word';o.acc=[w.de,w.base].map(nrm);o.ans=w.de;return o}
- if(m==='mist'){o.big=gap(w);o.typed=1;o.hint='Type the missing word · meaning: '+w.ru;o.acc=[nrm(w.base)];o.ans=w.base;return o}
+ if(m==='man'){o.big=w.de;o.typed=1;o.hint='Type the Russian translation';o.acc=[...new Set([...vars(w.ru,1),...altOf(w,'man')])];o.ans=w.ru;return o}
+ if(m==='rev'){o.big=w.ru;o.typed=1;o.hint='Type the German word';o.acc=[...new Set([w,...S.words.filter(x=>x.id!==w.id&&same(w,x))].flatMap(x=>[...vars(x.de),...vars(x.base)]).concat(altOf(w,'rev')))];o.ans=w.de;return o}
+ if(m==='ord'){const T=ordTok(w),toks=T.disp.map((t,i)=>({t,i})).filter(x=>x.t);if(toks.length<3)return null;let sh=shuf(toks),n=0;while(n++<6&&sh.every((x,k)=>x.i===toks[k].i))sh=shuf(toks);
+  o.ord=1;o.toks=sh;o.sel=[];o.end=T.end;o.big=w.exRu||'« '+w.ru+' »';o.hint=w.exRu?'Build the German sentence · key word: '+w.ru:'Arrange the words into a sentence';o.acc=[...new Set([nrm(w.ex),...altOf(w,'ord')])];o.ans=w.ex;return o}
+ if(m==='mist'){o.big=gap(w);o.typed=1;o.hint='Type the missing word · meaning: '+w.ru;o.acc=[...new Set([...vars(w.base),...altOf(w,'mist')])];o.ans=w.base;return o}
  if(m==='pl'){o.big=(w.art?w.art+' ':'')+w.base;return choice('pl','Pick the plural form',others.filter(x=>x.pos==='noun'))}
  if(m==='mis'){const re=new RegExp(w.base.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');o.big=w.ex.replace(re,'_____');return choice('base','Fill the gap · meaning: '+w.ru)}}
-const PAIR={dr:'rd',rd:'dr',man:'rev',rev:'man'};
+const PAIR={dr:'rd',man:'rev'}; // after German→Russian prefer Russian→German; not the other way round
 function makeSession(c){const now=Date.now();
  const cand=S.words.filter(w=>(!c.only||c.only.includes(w.id))&&c.types.some(m=>applicable(w,m))).map(w=>{const a=Object.values(w.s).filter(x=>x.n),nw=!a.length,due=a.some(x=>x.due<=now),er=a.length?1-a.reduce((p,x)=>p+x.ok,0)/a.reduce((p,x)=>p+x.n,0):0;
-  const lr=a.some(x=>x.st<3),sl=a.some(x=>now-(x.last||now)>14*DAY);let wt=1+(sl?1.5:0)+(nw?2:0)+(due?4:0)+(lr?2:0)+er*3;if(!nw&&!due&&!lr)wt=.3+er*2;if(c.src==='new'&&!nw)wt=0;if(c.src==='seen'&&!isSeen(w))wt=0;if(c.src==='seen'&&wt>0&&wt<1)wt=1+er*2;if(c.src==='due'&&!due&&!nw)wt=.2;return{w,wt,nw}}).filter(x=>x.wt>0);
+  const lr=a.some(x=>x.st<3),sl=a.some(x=>now-(x.last||now)>14*DAY);let wt=1+(sl?1.5:0)+(nw?2:0)+(due?4:0)+(lr?2:0)+er*3;if(!nw&&!due&&!lr)wt=.3+er*2;if(c.src==='new'&&!nw)wt=0;if(c.src==='seen'&&!isSeen(w))wt=0;if(c.src==='seen'&&wt>0&&wt<1)wt=1+er*2;if(c.src==='due'&&!due&&!nw)wt=.2;return{w,wt:wt>0&&c.types.includes('ord')&&ordOk(w)&&isSeen(w)?wt*1.4:wt,nw}}).filter(x=>x.wt>0);
  const qs=[];let nn=0;while(qs.length<c.n&&cand.length){let r=Math.random()*cand.reduce((p,x)=>p+x.wt,0),i=0;for(;i<cand.length-1;i++){r-=cand[i].wt;if(r<=0)break}{const c0=cand.splice(i,1)[0];if(c0.nw&&nn>=8)continue;if(c0.nw)nn++;qs.push({w:c0.w})}}
  return{qs,i:0,ok:0,tot:0,miss:[],done:false,types:c.types,rq:{},rep:{},intro:{}}}
 // picks the exercise type when the question is shown; prefers the opposite direction to the last one used for this word
-const tw=(w,m)=>.5+Math.min(3,(w.s[SEED[m]]||{st:0}).st)*1.3;
-function order(w,ts){const ok=ts.filter(m=>applicable(w,m)).map(m=>[m,Math.random()**(1/(TYP[m]?tw(w,m):({dr:3,rd:3,mis:3,aud:2}[m]||1)))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]),p=PAIR[w.lm];if(p&&ok.includes(p)&&Math.random()<.7)ok.unshift(p);else ok.sort((a,b)=>(a===w.lm)-(b===w.lm));if(w.art&&ok.includes('art')&&w.lm!=='art'&&Math.random()<.08)ok.unshift('art');return ok}
-function sayAll(w,m){if(m==='mis'&&w.ex)say(w.ex);else{say(w.de);if(w.ex)say(w.ex,1)}}
-function say(t,add,rate){try{const u=new SpeechSynthesisUtterance(t),v=speechSynthesis.getVoices().find(x=>/^de/i.test(x.lang));u.lang='de-DE';if(v)u.voice=v;u.rate=rate||.85;if(!add)speechSynthesis.cancel();speechSynthesis.speak(u)}catch(x){}}
+const tw=(w,m)=>(m==='rev'?1.2:.5)+Math.min(3,(w.s[SEED[m]]||{st:0}).st)*1.3;
+function order(w,ts){const ok=ts.filter(m=>applicable(w,m)&&!(m==='ord'&&ts.length>1&&ordBlocked())).map(m=>[m,Math.random()**(1/(TYP[m]&&m!=='ord'?tw(w,m)*(BIAS[m]||1):(BIAS[m]||1)))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]),p=PAIR[w.lm];if(p&&ok.includes(p)&&Math.random()<.7)ok.unshift(p);else ok.sort((a,b)=>(a===w.lm)-(b===w.lm));if(w.art&&ok.includes('art')&&w.lm!=='art'&&Math.random()<.08)ok.unshift('art');return ok}
+function sayAll(w,m){if((m==='mis'||m==='ord')&&w.ex)say(w.ex);else{say(w.de);if(w.ex)say(w.ex,1)}}
+// speech queue: AU = utterances still playing; SQ = actions waiting until speech has finished
+const AU=new Set(),SQ=[];
+const speaking=()=>AU.size>0;
+const spoken=()=>{if(AU.size)return;SQ.splice(0).forEach(f=>f())};
+function say(t,add,rate){try{const vs=speechSynthesis.getVoices(),u=new SpeechSynthesisUtterance(t),v=vs.find(x=>S.voice&&x.voiceURI===S.voice)||vs.find(x=>/^de/i.test(x.lang));u.lang=v?v.lang:'de-DE';if(v)u.voice=v;u.rate=rate||.85;if(!add){speechSynthesis.cancel();AU.clear()}
+ AU.add(u);const d=()=>{clearTimeout(u.tm);if(AU.delete(u))spoken()};u.onend=u.onerror=d;u.tm=setTimeout(d,15000); // failsafe if the browser never fires onend
+ speechSynthesis.speak(u)}catch(x){AU.clear();spoken()}}
+// German voices available in this browser, for the voice picker in Settings
+const voiceOpts=()=>{let vs=[];try{vs=speechSynthesis.getVoices().filter(x=>/^de/i.test(x.lang))}catch(x){}
+ return'<option value="">Automatic</option>'+vs.map(x=>`<option value="${e(x.voiceURI)}" ${S.voice===x.voiceURI?'selected':''}>${e(x.name)} (${e(x.lang)})</option>`).join('')+(vs.length?'':'<option disabled>No German voices found</option>')};
+try{speechSynthesis.addEventListener('voiceschanged',()=>{const s=$('#vs');if(s)s.innerHTML=voiceOpts()})}catch(x){}
+// runs fn right away if nothing is playing, otherwise after the current speech has finished
+function go(fn){if(!speaking())return fn();if(!ses||ses.pend)return;const s=ses,i=s.i,m=$('#main');s.pend=1;if(m)m.classList.add('wt');
+ SQ.push(()=>{s.pend=0;if(m)m.classList.remove('wt');if(ses===s&&s.i===i)fn()})}
 const ho=t=>e(t).replace(/^(der|die|das)\b/,m=>`<span class="${m}">${m}</span>`);
-function prep(it){if(it.big)return it;for(const m of it.m?[it.m]:(ses.mode==='learn'?learnOrder(it.w):order(it.w,ses.types))){const q=build(it.w,m);if(q){Object.assign(it,q);it.m=m;it.w.lm=m;return it}}return null}
+function prep(it){if(it.big)return it;for(const m of it.m?[it.m]:(ses.mode==='learn'?learnOrder(it.w):order(it.w,ses.types))){const q=build(it.w,m);if(q){Object.assign(it,q);it.m=m;it.w.lm=m;ses.lastM=m;if(m==='ord'&&!it.retry)ses.ordN=(ses.ordN||0)+1;return it}}return null}
 function later(it,min,max){ses.qs.splice(Math.min(ses.i+1+min+(Math.random()*(max-min+1)|0),ses.qs.length),0,it)}
 // ---------- views ----------
 const V={};let ses=null,cfg={n:20,types:Object.keys(TN),src:'mixed'};
@@ -100,18 +149,19 @@ function exHtml(txt,w){const parts=String(txt).split(/(\p{L}+(?:[-'’]\p{L}+)*)
   return p.length>1?`<span class="tr" data-w="${e(p)}">${e(p)}</span>`:e(p)}).join('')}
 const wd=w=>w.art?`<span class="${w.art}">${w.art}</span> ${e(w.base)}`:e(w.de);
 let LASTMISS=[];const fmtD=ms=>{const t=Math.round(ms/1000);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
-const SG={Recognition:['dr'],'Reverse recognition':['rd'],'Active recall':['man','rev'],Spelling:['rev','mist'],Article:['art'],Plural:['pl'],Context:['mis','mist'],Listening:['aud']},SIMP={aud:'dr',rev:'rd',man:'dr',mist:'mis',rd:'dr'},RT=['Again','Hard','Good','Easy'];
-const LO=['dr','rd','aud','rev','art','pl','mis','mist'],PRE={aud:'dr',rd:'dr',rev:'rd',art:'dr',pl:'dr',mis:'dr',mist:'mis'};
+const SG={Recognition:['dr'],'Reverse recognition':['rd'],'Active recall':['man','rev'],Spelling:['rev','mist'],Article:['art'],Plural:['pl'],Context:['mis','mist'],Listening:['aud'],'Sentence building':['ord']},SIMP={aud:'dr',rev:'rd',man:'dr',mist:'mis',rd:'dr'},RT=['Again','Hard','Good','Easy'];
+const LO=['dr','rd','aud','rev','ord','art','pl','mis','mist'],PRE={aud:'dr',rd:'dr',rev:'rd',art:'dr',pl:'dr',mis:'dr',mist:'mis',ord:'rd'};
 const snapshot=()=>{const o={};S.words.forEach(w=>Object.entries(w.s).forEach(([m,x])=>o[w.id+'|'+m]=x.st));return o};
 // Learn: weak skills first, then the next unmastered stage; mastered skills (2 in a row) are skipped
-function learnOrder(w){const A=LO.filter(m=>applicable(w,m)),X=m=>w.s[m]||{n:0,ok:0,st:0,due:0},ms=m=>X(m).st>=2,pre=m=>!PRE[m]||X(PRE[m]).n>0;
+function learnOrder(w){const A=LO.filter(m=>applicable(w,m)&&!(m==='ord'&&ordBlocked())),X=m=>w.s[m]||{n:0,ok:0,st:0,due:0},ms=m=>X(m).st>=2,pre=m=>!PRE[m]||X(PRE[m]).n>0;
  const weak=A.filter(m=>X(m).n>0&&!ms(m)).sort((p,q)=>X(p).st-X(q).st||(X(q).n-X(q).ok)-(X(p).n-X(p).ok)),
  nxt=A.filter(m=>!weak.includes(m)&&!ms(m)&&pre(m)),done=A.filter(m=>ms(m)&&X(m).n>0).sort((p,q)=>X(p).due-X(q).due),L=[...weak,...nxt,...done];
- if(L.length>1&&L[0]===w.lm&&Math.random()<.6)L.push(L.shift());return L.length?L:order(w,ses.types)}
+ if(L.length>1&&L[0]===w.lm&&Math.random()<.6)L.push(L.shift());if(A.includes('rev')&&X('rd').n>0&&w.lm!=='rev'&&Math.random()<.3){const i=L.indexOf('rev');if(i>0)L.unshift(L.splice(i,1)[0])}if(A.includes('ord')&&X('rd').n>0&&w.lm!=='ord'&&Math.random()<.3){const i=L.indexOf('ord');if(i>0)L.unshift(L.splice(i,1)[0])}return L.length?L:order(w,ses.types)}
 function makeReview(c){const now=Date.now(),eod=new Date().setHours(23,59,59,999),L=[];
  S.words.forEach(w=>Object.entries(w.s).forEach(([m,x])=>{if(x.n>0&&x.due<=eod&&applicable(w,m))L.push({w,m,due:x.due,lap:x.n-x.ok})}));
- L.sort((a,b)=>(a.due<=now?0:1)-(b.due<=now?0:1)||a.due-b.due||b.lap-a.lap);const pool=L.slice(0,c.n),qs=[];
+ L.sort((a,b)=>(a.due<=now?0:1)-(b.due<=now?0:1)||a.due-b.due||b.lap-a.lap);const ex=shuf(S.words.filter(w=>ordOk(w)&&(w.s.rd||{}).n>0&&!(w.s.ord||{}).n&&!L.some(x=>x.w===w&&x.m==='ord'))).slice(0,Math.max(1,Math.round(c.n*.15))),pool=L.slice(0,Math.max(0,c.n-ex.length)),qs=[];
  while(pool.length){let i=pool.findIndex(x=>!qs.length||x.w.id!==qs[qs.length-1].w.id);if(i<0)i=0;const x=pool.splice(i,1)[0];qs.push({w:x.w,m:x.m})}
+ ex.forEach(w=>qs.splice(Math.random()*(qs.length+1)|0,0,{w,m:'ord'}));
  return{qs,i:0,ok:0,tot:0,miss:[],done:false,types:Object.keys(TN),rq:{},rep:{},intro:{}}}
 // SM-2-inspired grading: 0 Again, 1 Hard, 2 Good, 3 Easy
 function applyG(w,m,g){const s=sk(w,m),t=S.types[m]||(S.types[m]={n:0,ok:0}),d=S.log[today()]||(S.log[today()]={n:0,ok:0}),now=Date.now();s.n++;s.last=now;t.n++;d.n++;
@@ -133,25 +183,42 @@ V.review=()=>{if(ses&&ses.on&&ses.mode==='review')return quiz();const eod=new Da
  $('#main').innerHTML=`<h1>Review</h1><p class="sub">Spaced repetition: answer, then rate your recall. Every skill of every word has its own schedule.</p><div class="g"><div class="card"><div class="lbl">Overdue</div><div class="big">${od}</div></div><div class="card"><div class="lbl">Due later today</div><div class="big">${td}</div></div></div><div class="card glass"><div class="row"><label>Items <select id="cn">${[10,20,30,50].map(n=>`<option ${n==cfg.n?'selected':''}>${n}</option>`).join('')}</select></label></div><p><button class="pri" id="go" ${od+td?'':'disabled'}>Start review (Enter)</button></p>${od+td?'':'<p class="lbl">Nothing is due yet. Practice in Learn to build your review schedule.</p>'}</div>`;
  $('#go').onclick=()=>startSession({n:+$('#cn').value,src:'due',mode:'review'})};
 V.blitz=()=>{if(ses&&ses.on&&ses.mode==='blitz')return quiz();if(!S.words.length)return $('#main').innerHTML='<h1>Practice</h1>'+empty();
- $('#main').innerHTML=`<h1>Blitz</h1><p class="sub">Fast randomized practice: choices, typing, articles, plurals and context. Instant feedback.</p><div class="card glass"><div class="row"><label>Questions <select id="cn">${[10,20,30,50].map(n=>`<option ${n==cfg.n?'selected':''}>${n}</option>`).join('')}</select></label><label>Words <select id="cs"><option value="mixed">Mixed</option><option value="due">Review only</option><option value="seen">Seen before only</option><option value="new">New only</option></select></label></div><h2 style="margin-top:16px">Exercise types</h2><div class="row">${Object.entries(TN).map(([k,v])=>`<label><input type="checkbox" class="ct" value="${k}" ${cfg.types.includes(k)?'checked':''}> ${v}</label>`).join('')}</div><p class="lbl">Typing exercises only appear for words you have already seen.</p><p><button class="pri" id="go">Start (Enter)</button></p></div>`;
+ $('#main').innerHTML=`<h1>Blitz</h1><p class="sub">Fast randomized practice: choices, typing, articles, plurals and context. Instant feedback.</p><div class="card glass"><div class="row"><label>Questions <select id="cn">${[10,20,30,50].map(n=>`<option ${n==cfg.n?'selected':''}>${n}</option>`).join('')}</select></label><label>Words <select id="cs"><option value="mixed">Mixed</option><option value="due">Review only</option><option value="seen">Seen before only</option><option value="new">New only</option></select></label></div><h2 style="margin-top:16px">Exercise types</h2><div class="row">${Object.entries(TN).map(([k,v])=>`<label><input type="checkbox" class="ct" value="${k}" ${cfg.types.includes(k)?'checked':''}> ${v}</label>`).join('')}</div><p class="lbl">Typing and sentence building only appear for words you have already seen; sentence building also needs an example sentence (3–16 words). Words with a usable example now: ${S.words.filter(ordOk).length}.</p><p><button class="pri" id="go">Start (Enter)</button></p></div>`;
  $('#cs').value=cfg.src;$('#go').onclick=()=>{const t=[...document.querySelectorAll('.ct:checked')].map(x=>x.value);if(!t.length)return toast('Pick at least one type');startSession({n:+$('#cn').value,src:$('#cs').value,types:t})}};
 function quiz(){while(ses.qs[ses.i]&&!prep(ses.qs[ses.i]))ses.qs.splice(ses.i,1);const q=ses.qs[ses.i];if(!q)return summary();if(!q.w.seen){q.w.seen=Date.now();save()}if(ses.mode==='learn'&&S.intro!==0&&!q.retry&&!seen(q.w)&&!ses.intro[q.w.id]){ses.intro[q.w.id]=1;return intro(q.w)}
  $('#main').innerHTML=`<div class="row" style="justify-content:space-between"><span class="lbl">${ses.i+1} / ${ses.qs.length}</span><button onclick="ses=null;render()">End</button></div><div class="bar" style="margin:8px 0 14px"><i style="width:${ses.i/ses.qs.length*100}%"></i></div>
- <div class="card glass q" id="qc"><span class="tg">${q.retry?'Again':TN[q.m]}</span><div class="qw">${['dr','pl','man'].includes(q.m)?wd(q.w):e(q.big)}</div><div class="qh">${e(q.hint)}</div>${['dr','pl','art','man'].includes(q.m)?`<button class="sp" onclick="say(ses.qs[ses.i].w.de)">🔊</button>`:''}<br>
- ${q.typed?`<div class="row" style="justify-content:center"><input type="text" id="ti" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="font-size:18px;min-width:0;flex:1 1 200px"><button class="pri" onclick="submit()">Check</button></div>`:`<div class="opts">${q.opts.map((o,i)=>`<button class="${/^(der|die|das)$/.test(o.t)?'a-'+o.t:''}" onclick="pick(${i})"><span class="lbl">${i+1}</span> &nbsp;${ho(o.t)}</button>`).join('')}</div>`}<div id="fb"><button class="idk" onclick="idk()">I don’t know</button></div></div>`;
+ <div class="card glass q" id="qc"><span class="tg">${q.retry?'Again':TN[q.m]}</span><div class="qw${q.ord?' sm':''}">${['dr','pl','man'].includes(q.m)?wd(q.w):e(q.big)}</div><div class="qh">${e(q.hint)}</div>${['dr','pl','art','man'].includes(q.m)?`<button class="sp" onclick="say(ses.qs[ses.i].w.de)">🔊</button>`:''}<br>
+ ${q.ord?`<div id="ow">${ordUI(q)}</div>`:q.typed?`<div class="row" style="justify-content:center"><input type="text" id="ti" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="font-size:18px;min-width:0;flex:1 1 200px"><button class="pri" onclick="submit()">Check</button></div>`:`<div class="opts">${q.opts.map((o,i)=>`<button class="${/^(der|die|das)$/.test(o.t)?'a-'+o.t:''}" onclick="pick(${i})"><span class="lbl">${i+1}</span> &nbsp;${ho(o.t)}</button>`).join('')}</div>`}<div id="fb"><button class="idk" onclick="idk()">I don’t know</button></div></div>`;
  const t=$('#ti');if(t)t.focus();if(q.m==='aud'){$('.qw').innerHTML='<button class="pri" onclick="say(ses.qs[ses.i].w.de)">🔊 Play</button> <button onclick="say(ses.qs[ses.i].w.de,0,.55)">🐢 Slow</button>';say(q.w.de)}}
-function intro(w){$('#main').innerHTML=`<div class="row" style="justify-content:space-between"><span class="lbl">${ses.i+1} / ${ses.qs.length}</span><button onclick="ses=null;render()">End</button></div><div class="card glass q"><span class="tg">New word</span><div class="qw">${wd(w)}</div><div class="mem">${e(w.ru)}${w.pl?`<small>pl. ${e(w.pl)}</small>`:''}</div>${w.ex?`<div class="ex" data-ru="${e(w.exRu||'')}">${exHtml(w.ex,w)}${w.exRu?`<div class="exr">${e(w.exRu)}</div>`:''}</div>`:''}<p class="row" style="justify-content:center"><button class="sp" onclick="sayAll(ses.qs[ses.i].w,'')">🔊 Listen</button><button class="pri" onclick="ses.show=0;quiz()">Got it, test me (Enter)</button></p></div>`;ses.show=1;if(S.say!==0)say(w.de)}
+function intro(w){$('#main').innerHTML=`<div class="row" style="justify-content:space-between"><span class="lbl">${ses.i+1} / ${ses.qs.length}</span><button onclick="ses=null;render()">End</button></div><div class="card glass q"><span class="tg">New word</span><div class="qw">${wd(w)}</div><div class="mem">${e(w.ru)}${w.pl?`<small>pl. ${e(w.pl)}</small>`:''}</div>${w.ex?`<div class="ex" data-ru="${e(w.exRu||'')}">${exHtml(w.ex,w)}${w.exRu?`<div class="exr">${e(w.exRu)}</div>`:''}</div>`:''}<p class="row" style="justify-content:center"><button class="sp" onclick="sayAll(ses.qs[ses.i].w,'')">🔊 Listen</button><button class="pri" onclick="go(()=>{ses.show=0;quiz()})">Got it, test me (Enter)</button></p></div>`;ses.show=1;if(S.say!==0)say(w.de)}
 function pick(i){if(ses.done)return;const q=ses.qs[ses.i];finish(q.opts[i].t===q.ans,i)}
-function submit(){if(ses.done)return;const q=ses.qs[ses.i],raw=$('#ti').value,v=nrm(raw);if(!v)return;ses.last=raw;ses.near=!q.acc.includes(v)&&q.acc.some(a=>a.length>4&&lev(a,v)<=1);finish(q.acc.includes(v))}
-function idk(){if(ses.done)return;ses.last='';ses.near=0;finish(false,null,true)}
+function submit(){if(ses.done)return;const q=ses.qs[ses.i],raw=$('#ti').value,v=nrm(raw).replace(/\s+/g,' ').trim();if(!v)return;ses.last=raw;ses.near=0;ses.artw=0;ses.note='';
+ const A=q.acc;let ok=A.includes(v);
+ if(!ok&&q.m!=='man'){const fv=fold(v);if(A.some(a=>fold(a)===fv)&&!strictOther(q.w,v)){ok=true;ses.note='Correct — but mind the umlauts / ß: '+q.ans}}
+ if(!ok&&q.m==='man'&&A.some(a=>a.length>5&&lev(a,v)<=1)){ok=true;ses.note='Small typo — counted as correct'}
+ if(!ok){ses.near=A.some(a=>a.length>4&&lev(a,v)<=1);const m=v.match(/^(der|die|das)\s+(.+)$/);if(m&&q.w.art&&m[1]!==q.w.art&&A.includes(m[2]))ses.artw=1}
+ finish(ok)}
+// "My answer was correct": undoes the miss, scores it as correct and remembers the answer as an accepted alternative
+function override(){const q=ses&&ses.qs[ses.i];if(!q||!ses.done||q.ov||(!q.typed&&!q.ord)||!ses.last||ses.lastOk)return;const w=q.w;q.ov=1;
+ const a=nrm(ses.last).replace(/\s+/g,' ').trim();w.alt=w.alt||{};const L=w.alt[q.m]=w.alt[q.m]||[];if(!L.includes(a))L.push(a);
+ if(q.snap){const sn=q.snap;w.s[q.m]=JSON.parse(sn.s);if(sn.t)S.types[q.m]=JSON.parse(sn.t);else delete S.types[q.m];if(sn.d)S.log[sn.day]=JSON.parse(sn.d);else delete S.log[sn.day];w.err=sn.err;if(sn.le===undefined)delete w.lastErr;else w.lastErr=sn.le;
+  apply(w,q.m,true);ses.ok++;const k=ses.miss.indexOf(q);if(k>=0)ses.miss.splice(k,1);const ev=[...ses.ev].reverse().find(x=>x.id===w.id&&x.m===q.m);if(ev)ev.g=2;
+  for(let j=ses.i+1;j<ses.qs.length;j++){const x=ses.qs[j];if(x.retry&&x.w===w){ses.qs.splice(j,1);if(ses.rq[w.id])ses.rq[w.id]--;break}}}
+ else save();
+ ses.lastOk=true;const c=$('#qc');if(c){c.classList.remove('bad');c.classList.add('ok')}
+ const h=document.querySelector('#fb .fb>b');if(h){h.className='okc';h.textContent='Correct ✓'}
+ const ag=$('#agm');if(ag)ag.remove();const oa=$('#oa');if(oa){oa.classList.remove('bad');oa.classList.add('ok')}const b=$('#ovb');if(b)b.outerHTML='<div class="lbl okc">Accepted — this spelling will be recognised from now on</div>';
+ const r=document.querySelector('.rt');if(r){if(r.previousElementSibling)r.previousElementSibling.remove();r.outerHTML=rateHtml(true)}}
+function idk(){if(ses.done)return;ses.last='';ses.near=0;ses.note='';ses.artw=0;finish(false,null,true)}
 function finish(ok,i,dk){const q=ses.qs[ses.i],w=q.w;ses.done=true;let again=false;{const t=$('#ti');if(t)t.disabled=true}
- ses.lastOk=ok;if(!q.retry&&ses.mode!=='review'){apply(w,q.m,ok);ses.tot++;if(ok)ses.ok++;else ses.miss.push(q);ses.ev.push({id:w.id,m:q.m,g:ok?2:0})}
+ ses.lastOk=ok;if((q.typed||q.ord)&&!q.retry&&ses.mode!=='review'){const s0=sk(w,q.m),t0=S.types[q.m],d0=S.log[today()];q.snap={s:JSON.stringify(s0),t:t0&&JSON.stringify(t0),d:d0&&JSON.stringify(d0),day:today(),err:w.err,le:w.lastErr}}
+ if(!q.retry&&ses.mode!=='review'){apply(w,q.m,ok);ses.tot++;if(ok)ses.ok++;else ses.miss.push(q);ses.ev.push({id:w.id,m:q.m,g:ok?2:0})}
  if(!ok){if(!dk&&q.opts&&i!=null&&q.opts[i].id){const k=w.id+'|'+q.opts[i].id;S.conf[k]=(S.conf[k]||0)+1;(ses.cf=ses.cf||[]).push(k);save()}
   if(ses.mode!=='review'&&(ses.rq[w.id]=(ses.rq[w.id]||0)+1)<=2){again=true;later({w,m:ses.mode==='learn'?SIMP[q.m]||q.m:q.m,retry:1},3,4)}}
  else if(ses.mode!=='review'&&!q.retry&&!ses.rep[w.id]&&status(w)!=='known'&&(status(w)==='learning'||Math.random()<.2)){ses.rep[w.id]=1;later({w},5,8)}
  if(!dk)$('#qc').classList.add(ok?'ok':'bad');if(q.opts)[...document.querySelectorAll('.opts button')].forEach((b,j)=>{const x=S.words.find(y=>y.id===q.opts[j].id);if(x)b.dataset.tr=q.m==='dr'?x.de:x.ru;if(q.opts[j].t===q.ans)b.classList.add('ok');else if(j===i)b.classList.add('bad')});
- {const qw=$('.qw');if(qw&&q.m==='aud')qw.innerHTML=wd(w);if(qw&&q.m!=='mis'&&q.m!=='mist'){qw.dataset.tr=['rd','rev'].includes(q.m)?w.de:w.ru;qw.classList.add('tr')}}$('#fb').innerHTML=`<div class="fb"><b class="${ok?'okc':'er'}">${ok?'Correct ✓':dk?'No problem — remember it':'Not quite ✗'}</b> — <b>${e(q.ans)}</b>${q.typed&&!ok&&ses.last?`<div class="lbl">You typed: ${e(ses.last)}${ses.near?' — almost, check the spelling':''}</div>`:''}${!ok||w.art?`<div class="mem">${wd(w)} = ${e(w.ru)}${w.art?`<small>${w.art==='der'?'masculine':w.art==='die'?'feminine':'neuter'}</small>`:''}</div>`:''}${again?'<div class="lbl">You’ll see this word again in a few questions.</div>':''}${w.ex?`<div class="ex" data-ru="${e(w.exRu||'')}">${exHtml(w.ex,w)}${w.exRu?`<div class="exr">${e(w.exRu)}</div>`:''}<button class="sp" style="margin:0;padding:2px 10px;min-height:32px" onclick="say(ses.qs[ses.i].w.ex)">🔊</button></div>`:''}${q.m==='art'?`<div class="lbl">${e(w.de)} (${e(w.pl||'')})</div>`:''}<div><button class="sp" onclick="sayAll(ses.qs[ses.i].w,ses.qs[ses.i].m)">🔊 Listen</button></div></div>${ses.mode==='review'?rateHtml(ok):`<p><button class="pri" onclick="next()">Next (Enter)</button></p>`}`;if(S.say!==0)sayAll(w,q.m)}
-function next(){ses.i++;ses.done=false;ses.rated=0;quiz()}
+ {const qw=$('.qw');if(qw&&q.m==='aud')qw.innerHTML=wd(w);if(qw&&q.m!=='mis'&&q.m!=='mist'&&q.m!=='ord'){qw.dataset.tr=['rd','rev'].includes(q.m)?w.de:w.ru;qw.classList.add('tr')}}$('#fb').innerHTML=`<div class="fb"><b class="${ok?'okc':'er'}">${ok?'Correct ✓':dk?'No problem — remember it':'Not quite ✗'}</b> — <b>${e(q.ans)}</b>${(q.typed||q.ord)&&!ok&&ses.last?`<div class="lbl">${q.ord?'Your order':'You typed'}: ${e(ses.last)}${ses.near?' — almost, check the spelling':''}${ses.artw?' — check the article':''}</div><button class="sp" id="ovb" onclick="override()">${q.ord?'✓ My order is also correct':'✓ My answer was correct'}</button>`:''}${(q.typed||q.ord)&&ok&&ses.note?`<div class="lbl">${e(ses.note)}</div>`:''}${!ok||w.art?`<div class="mem">${wd(w)} = ${e(w.ru)}${w.art?`<small>${w.art==='der'?'masculine':w.art==='die'?'feminine':'neuter'}</small>`:''}</div>`:''}${again?'<div class="lbl" id="agm">You’ll see this word again in a few questions.</div>':''}${w.ex?`<div class="ex" data-ru="${e(w.exRu||'')}">${exHtml(w.ex,w)}${w.exRu?`<div class="exr">${e(w.exRu)}</div>`:''}<button class="sp" style="margin:0;padding:2px 10px;min-height:32px" onclick="say(ses.qs[ses.i].w.ex)">🔊</button></div>`:''}${q.m==='art'?`<div class="lbl">${e(w.de)} (${e(w.pl||'')})</div>`:''}<div><button class="sp" onclick="sayAll(ses.qs[ses.i].w,ses.qs[ses.i].m)">🔊 Listen</button></div></div>${ses.mode==='review'?rateHtml(ok):`<p><button class="pri" onclick="next()">Next (Enter)</button></p>`}`;if(S.say!==0)sayAll(w,q.m)}
+function next(){go(()=>{ses.i++;ses.done=false;ses.rated=0;quiz()})}
 function summary(){const n=ses.tot||1,a=Math.round(ses.ok/n*100),dur=Date.now()-ses.t0,F=id=>S.words.find(w=>w.id===id),
  W=[...new Set(ses.ev.map(x=>x.id))].map(F).filter(Boolean),miss=[...new Set(ses.miss.map(q=>q.w.id))].map(F).filter(Boolean);LASTMISS=miss.map(w=>w.id);
  const learned=W.filter(w=>['fresh','known'].includes(status(w))&&!miss.includes(w)),need=W.filter(w=>status(w)==='learning'||miss.includes(w)),
@@ -165,8 +232,8 @@ function summary(){const n=ses.tot||1,a=Math.round(ses.ok/n*100),dur=Date.now()-
  ${L('Learned',learned)}${L('Still need practice',need)}${cf.length?`<div class="card" style="margin-bottom:14px"><h2>Most confused</h2>${cf.map(x=>`<div>${x}</div>`).join('')}</div>`:''}${L('Recognized but not recalled yet',norec)}${L('Weak articles / plurals',weakG)}
  <p class="row">${miss.length?`<button class="pri" onclick="practiceMistakes()">Practice mistakes (${miss.length})</button>`:''}<button onclick="startSession({mode:'${ses.mode}',only:null})">Again</button><button onclick="ses=null;location.hash='overview'">Home</button></p>`;ses.on=0}
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&/^#(blitz|learn|review)$/.test(location.hash)&&!(ses&&ses.on)){const g=$('#go');if(g)g.click();return}
- if(!ses||!ses.on||!ses.qs[ses.i])return;if(ses.show){if(ev.key==='Enter'){ev.preventDefault();ses.show=0;quiz()}return}const q=ses.qs[ses.i];if(ev.key==='Enter'){ev.preventDefault();ses.done?(ses.mode==='review'?rate(ses.lastOk?2:0):next()):(q.typed&&submit())}
- else if(!ses.done&&!q.typed){if(ev.key==='0')idk();else if(ev.key.toLowerCase()==='r'&&q.m==='aud')say(q.w.de);else if(/^[1-4]$/.test(ev.key)&&q.opts[ev.key-1])pick(ev.key-1)}else if(ses.done&&ses.mode==='review'&&/^[1-4]$/.test(ev.key)){const g=ev.key-1;if(ses.lastOk||!g)rate(g)}});
+ if(!ses||!ses.on||!ses.qs[ses.i])return;if(ses.show){if(ev.key==='Enter'){ev.preventDefault();go(()=>{ses.show=0;quiz()})}return}const q=ses.qs[ses.i];if(ev.key==='Enter'){ev.preventDefault();ses.done?(ses.mode==='review'?rate(ses.lastOk?2:0):next()):(q.typed?submit():q.ord&&ordCheck())}
+ else if(!ses.done&&!q.typed){if(ev.key==='0')idk();else if(ev.key==='Backspace'&&q.ord)ordUn(q.sel.length-1);else if(ev.key.toLowerCase()==='r'&&q.m==='aud')say(q.w.de);else if(/^[1-4]$/.test(ev.key)&&q.opts&&q.opts[ev.key-1])pick(ev.key-1)}else if(ses.done&&ses.mode==='review'&&/^[1-4]$/.test(ev.key)){const g=ev.key-1;if(ses.lastOk||!g)rate(g)}});
 V.vocab=()=>{const q=(window.fq||'').toLowerCase(),fp=window.fp||'',fs=window.fs||'';
  const L=S.words.filter(w=>(!q||(w.de+w.ru+w.cat).toLowerCase().includes(q))&&(!fp||w.pos===fp)&&(!fs||status(w)===fs)&&(!window.fv||(window.fv==='seen')===isSeen(w)));
  let pv='';if(P){const ok=P.filter(o=>o.w&&!o.dup).length,bad=P.filter(o=>!o.w),dp=P.filter(o=>o.dup);
@@ -182,7 +249,7 @@ const vocab=()=>V.vocab();
 function rf(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>preview(String(r.result));r.readAsText(f)}
 function addW(){const o=parse($('#aw').value);if(!o.w)return toast(o.err);if(editId){const w=S.words.find(x=>x.id===editId);Object.assign(w,o.w,{id:w.id,s:w.s,err:w.err});editId=null}else{if(S.words.some(x=>nd(x.de)===nd(o.w.de)))return toast('This word is already in your library');S.words.push(o.w)}save();toast('Saved');vocab()}
 function delW(id){ask('Delete this word and its progress?',()=>{S.words=S.words.filter(w=>w.id!==id);save();vocab()})}
-V.settings=()=>{$('#main').innerHTML=`<h1>Settings</h1><div class="card" style="margin-bottom:14px"><h2>Pronunciation</h2><label><input type="checkbox" ${S.say===0?'':'checked'} onchange="S.say=this.checked?1:0;save()"> Auto-play German after each answer</label><br><label><input type="checkbox" ${S.intro===0?'':'checked'} onchange="S.intro=this.checked?1:0;save()"> Show new words before their first test</label></div><div class="card" style="margin-bottom:14px"><h2>Daily goal</h2><input type="number" id="gl" min="5" max="500" value="${S.goal}"> <button onclick="S.goal=Math.max(5,+$('#gl').value||20);save();toast('Saved')">Save</button></div>
+V.settings=()=>{$('#main').innerHTML=`<h1>Settings</h1><div class="card" style="margin-bottom:14px"><h2>Pronunciation</h2><label><input type="checkbox" ${S.say===0?'':'checked'} onchange="S.say=this.checked?1:0;save()"> Auto-play German after each answer</label><br><label><input type="checkbox" ${S.intro===0?'':'checked'} onchange="S.intro=this.checked?1:0;save()"> Show new words before their first test</label></div><div class="card" style="margin-bottom:14px"><h2>Voice</h2><div class="row"><select id="vs" onchange="S.voice=this.value;save();say('Guten Tag! Das ist meine Stimme.')">${voiceOpts()}</select><button onclick="say('Guten Tag! Das ist meine Stimme.')">🔊 Test</button></div><p class="lbl">The list shows the German voices installed on this device/browser. “Automatic” picks the first one.</p></div><div class="card" style="margin-bottom:14px"><h2>Daily goal</h2><input type="number" id="gl" min="5" max="500" value="${S.goal}"> <button onclick="S.goal=Math.max(5,+$('#gl').value||20);save();toast('Saved')">Save</button></div>
  <div class="card"><h2>Data</h2><div class="row"><button onclick="dl('vocabflow-backup.json',JSON.stringify(S),'application/json')">Export all data (JSON)</button><button onclick="dl('vocabflow-words.txt',S.words.map(line).join('\\n'),'text/plain')">Export vocabulary (TXT)</button><label class="btn">Import JSON<input type="file" accept=".json" hidden onchange="ij(this)"></label><button onclick="ask('Erase ALL vocabulary and progress?',()=>{S={v:1,words:[],log:{},types:{},conf:{},goal:20};save();render()})" class="er">Reset</button></div><p class="lbl">JSON import merges: existing words and progress are never deleted.</p></div>`}
 function ij(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(![1,2].includes(d.v)||!Array.isArray(d.words))throw 0;migrate(d);const have=new Set(S.words.map(w=>nd(w.de)));let n=0;d.words.forEach(w=>{if(w&&w.de&&w.ru&&!have.has(nd(w.de))){w.s=w.s||{};w.id=w.id||Math.random().toString(36).slice(2);w.base=w.base||w.de;S.words.push(w);n++}});save();toast(n+' words added');render()}catch(x){toast('Invalid backup file')}};r.readAsText(f)}
 addEventListener('hashchange',()=>{if(location.hash!=='#blitz'&&ses&&ses.on===1&&0)ses=null;render()});render();
