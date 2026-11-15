@@ -256,3 +256,12 @@ body:has(main .q) main{padding-top:28px}
 .dots[data-s="fresh"] i.f{background:#4CC9F0}
 .dots[data-s="review"] i.f{background:#FF6B8B}
 .dots[data-s="known"] i.f{background:#3DDC97}
+
+/* ---------- dictionary switcher (DE / EN) ---------- */
+.me{display:none}
+#langsw{position:fixed;z-index:11;top:calc(env(safe-area-inset-top,0px) + 14px);right:max(16px,calc((100% - 920px)/2));display:flex;gap:2px;padding:3px;background:var(--s2);border:1px solid var(--bd);border-radius:99px}
+#langsw button{min-height:32px;padding:0 13px;border:0;border-radius:99px;background:transparent;color:var(--t2);font-size:12.5px;font-weight:700;letter-spacing:.02em;box-shadow:none}
+#langsw button.on{background:var(--grad);color:#fff;box-shadow:0 3px 10px rgba(124,92,255,.35)}
+#langsw button:hover:not(.on):not(:disabled){background:transparent;color:var(--t);border:0}
+body:has(main .q) #langsw{display:none}
+@media(max-width:760px){#langsw{top:calc(env(safe-area-inset-top,0px) + 8px);right:12px}#langsw button{min-height:34px;padding:0 11px}}

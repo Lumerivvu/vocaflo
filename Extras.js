@@ -1,5 +1,5 @@
 /* VocabFlow — UI enhancement layer. Read-only: it never changes words, progress or any stored learning data.
-   Adds: answer sounds (+ settings toggle) and level dots in the word list. */
+   Adds: DE/EN dictionary switcher, answer sounds (+ settings toggle) and level dots in the word list. */
 (()=>{'use strict';
 const PK='vocabflow.ui';
 const pref=()=>{try{return Object.assign({snd:1},JSON.parse(localStorage.getItem(PK)))}catch(e){return{snd:1}}};
@@ -34,6 +34,17 @@ function settings(){const m=document.getElementById('main'),h=m&&m.querySelector
   c.innerHTML='<h2>Sounds</h2><label><input type="checkbox" id="snd"> Play a soft sound after each answer</label>';
   const i=c.querySelector('input');i.checked=!!pref().snd;i.onchange=()=>{setPref({snd:i.checked?1:0});if(i.checked)sound('ok')};
   first.after(c)}
+
+
+/* ---- dictionary switcher (DE / EN). Each language has its own stored dictionary; script.js reads the choice on load ---- */
+(()=>{const cur=(()=>{try{return localStorage.getItem('vocabflow.lang')==='en'?'en':'de'}catch(e){return'de'}})();
+  document.title='VocabFlow · '+(cur==='en'?'English':'Deutsch');
+  if(document.getElementById('langsw'))return;
+  const box=document.createElement('div');box.id='langsw';box.setAttribute('role','group');box.setAttribute('aria-label','Dictionary language');
+  [['de','DE','Deutsch'],['en','EN','English']].forEach(([k,t,n])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.title=n;
+    b.className=k===cur?'on':'';b.setAttribute('aria-pressed',k===cur?'true':'false');
+    b.onclick=()=>{if(k===cur)return;try{localStorage.setItem('vocabflow.lang',k)}catch(e){}location.reload()};box.append(b)});
+  document.body.append(box)})();
 
 /* ---- watch the DOM: answer result -> sound; re-renders -> dots / settings ---- */
 const main=document.getElementById('main');if(!main)return;
