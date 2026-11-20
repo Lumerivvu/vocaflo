@@ -265,3 +265,21 @@ body:has(main .q) main{padding-top:28px}
 #langsw button:hover:not(.on):not(:disabled){background:transparent;color:var(--t);border:0}
 body:has(main .q) #langsw{display:none}
 @media(max-width:760px){#langsw{top:calc(env(safe-area-inset-top,0px) + 8px);right:12px}#langsw button{min-height:34px;padding:0 11px}}
+
+/* "I already know this word" button, undo toast, known words in the list */
+/* secondary action pills under a question: "I don't know" / "I already know" / "Listen" */
+.qa{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:22px}
+.qa.fa{justify-content:flex-start;margin-top:14px}
+.qb{min-height:42px;padding:0 18px 0 14px;border-radius:99px;font-size:14px;font-weight:600;color:var(--t2);background:rgba(37,35,66,.55);border:1px solid var(--bd2);box-shadow:none}
+.qb i{font-style:normal;font-size:15px;line-height:1;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(185,162,255,.12)}
+.qb.kn{color:var(--ok);background:rgba(61,220,151,.08);border-color:rgba(61,220,151,.35)}
+.qb.kn i{background:rgba(61,220,151,.18);font-weight:800}
+.qa.fa .qb{min-height:38px;font-size:13.5px}
+@media(hover:hover){button.qb:hover:not(:disabled){background:var(--s3);border-color:rgba(139,92,246,.55);color:var(--t)}
+button.qb.kn:hover:not(:disabled){background:rgba(61,220,151,.18);border-color:var(--ok);color:var(--ok)}}
+@media(max-width:520px){.qa .qb{flex:1 1 150px;padding:0 12px 0 10px;font-size:13.5px}}
+.toast.u{display:flex;align-items:center;gap:14px}
+.toast.u button{min-height:34px;padding:0 14px;font-size:13.5px}
+@media(max-width:760px){.toast.u{justify-content:space-between}}
+tr.ign td:not(:last-child){opacity:.55}
+.dots[data-s="ign"] i.f{background:#8F8AA8}
