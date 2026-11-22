@@ -283,3 +283,44 @@ button.qb.kn:hover:not(:disabled){background:rgba(61,220,151,.18);border-color:v
 @media(max-width:760px){.toast.u{justify-content:space-between}}
 tr.ign td:not(:last-child){opacity:.55}
 .dots[data-s="ign"] i.f{background:#8F8AA8}
+/* ---------- Grammar mode ---------- */
+.gback{margin-bottom:16px;min-height:38px;padding:0 14px;font-size:13.5px}
+.glv{margin:28px 0 12px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t2)}
+.gg{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr))}
+button.gc{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px;height:auto;min-height:0;padding:16px 18px;text-align:left;border-radius:var(--r);background:var(--card)}
+.gc b{font-size:16.5px;letter-spacing:-.01em}
+.gc small{color:var(--t2);font-weight:500;font-size:13.5px;line-height:1.35}
+.gc .bar{width:100%;margin-top:10px;height:6px}
+.gc .gs2{font-size:12.5px;color:var(--t2);margin-top:6px;font-weight:500}
+.gc.done{border-color:rgba(61,220,151,.45)}.gc.done .gs2{color:var(--ok)}
+@media(hover:hover){button.gc:hover:not(:disabled){background:var(--s2);border-color:rgba(139,92,246,.55)}}
+.gtabs{display:flex;gap:6px;margin:20px 0 16px;padding:5px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.gtabs button{flex:1;min-height:42px;background:transparent;border-color:transparent;color:var(--t2)}
+.gtabs button.on{background:var(--pt);color:#fff;border-color:rgba(139,92,246,.5)}
+.th h3{margin:26px 0 10px;font-size:16px;font-weight:700}.th h3:first-child{margin-top:0}
+.th p{margin:0 0 12px}.th ul{margin:0 0 12px;padding-left:20px}.th li{margin:5px 0}
+.gs{overflow-x:auto;margin:10px 0 16px}
+table.gt{width:auto;min-width:100%;font-size:14.5px}
+.gt th,.gt td,.gt th:first-child,.gt td:first-child,.gt th:last-child,.gt td:last-child{padding:8px 12px;border:1px solid var(--bd);font-size:14.5px}
+.gt tr:last-child>td{border-bottom:1px solid var(--bd)}
+.gt th{background:rgba(139,92,246,.12);color:var(--p2);font-size:13px}
+.cm{color:var(--der)}.cf{color:var(--die)}.cn{color:var(--das)}.cp{color:var(--p2)}.ch{color:#FFD166}
+.gx{margin:8px 0;padding:10px 14px;border-left:3px solid var(--p);background:rgba(139,92,246,.1);border-radius:0 12px 12px 0;font-size:16px;line-height:1.5;text-align:left}
+.gx small{display:block;color:var(--t2);font-size:13.5px;margin-top:2px}
+.gn{margin:14px 0;padding:12px 16px;border-radius:12px;background:rgba(56,217,230,.09);border:1px solid rgba(56,217,230,.3)}
+.gn.gw{background:rgba(255,181,71,.09);border-color:rgba(255,181,71,.4)}
+.gn.gw::before{content:"⚠ ";font-weight:700}
+.gtext{font-size:18px;line-height:2}
+.gm{color:#FFD166;font-weight:800;background:rgba(255,209,102,.12);border-radius:6px;padding:1px 5px}
+.gap{display:inline-block;min-width:3.2em;color:var(--p2);letter-spacing:.05em}
+.gwhy{margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(139,92,246,.12);color:var(--t);line-height:1.5}
+details.gdet{margin-top:16px}details.gdet summary{cursor:pointer;color:var(--p2);font-weight:600}
+.gtr{margin-top:10px;color:var(--t2);line-height:1.6}
+.gnav{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+@media(max-width:760px){.gtext{font-size:17px}.gnav button{flex:1 1 auto}.gtabs button{padding:0 6px}}
+/* grammar: review hub, mastery setup */
+.ghub{margin-top:14px}.ghub .row{margin-top:12px}
+.gpills{display:flex;flex-wrap:wrap;gap:8px}
+button.gpill{min-height:36px;padding:0 14px;font-size:13.5px;border-radius:999px;background:var(--card)}
+button.gpill.on{background:rgba(139,92,246,.22);border-color:rgba(139,92,246,.7)}
+.gdue{color:#ffb02e;font-weight:700}
